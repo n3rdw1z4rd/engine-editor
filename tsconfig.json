@@ -25,16 +25,13 @@
             "vite/client",
             "node"
         ],
-        "paths": {
-            "@n3rdw1z4rd/engine": [
-                "../engine/src/index.ts"
-            ]
-        }
+        "customConditions": [
+            "n3rdw1z4rd-source"
+        ]
     },
     "include": [
         "src",
-        "vite.config.ts",
-        "vite-plugin-decorators.ts"
+        "vite.config.ts"
     ],
     "exclude": [
         "**/_*"
