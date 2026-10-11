@@ -1,0 +1,32 @@
+{
+    "name": "@n3rdw1z4rd/engine-editor",
+    "version": "0.0.1",
+    "description": "Browser-first, mobile-friendly editor for @n3rdw1z4rd/engine.",
+    "private": true,
+    "type": "module",
+    "license": "MIT",
+    "author": "n3rdw1z4rd",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc -p tsconfig.json --noEmit && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@n3rdw1z4rd/core": "^0.18.4",
+        "@n3rdw1z4rd/engine": "file:../engine",
+        "@preact/signals": "^2.11.3",
+        "preact": "^11.0.1",
+        "simplex-noise": "^4.0.3",
+        "three": "^0.186.1"
+    },
+    "devDependencies": {
+        "@preact/preset-vite": "^2.10.6",
+        "@types/node": "^26.6.5",
+        "@types/three": "^0.186.0",
+        "esbuild": "^0.28.2"
+    },
+    "allowScripts": {
+        "esbuild@0.28.2": true,
+        "fsevents": true
+    }
+}

@@ -1,0 +1,510 @@
+/* ── tokens ─────────────────────────────────────────────────────── */
+
+:root {
+    color-scheme: dark;
+    --bg: #16171a;
+    --panel: #1d1f23;
+    --panel-2: #24272c;
+    --line: #33363c;
+    --fg: #dcdee2;
+    --muted: #8c9098;
+    --accent: #3fd1a4;
+    --accent-ink: #08110d;
+    --danger: #ff6b7d;
+    --warn: #f0b429;
+    --x: #ff6b6b;
+    --y: #7bd88f;
+    --z: #6aa8ff;
+    --radius: 8px;
+    --tap: 44px; /* minimum touch target */
+    --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.35 var(--font);
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+    height: 100dvh; /* dvh, not vh: mobile browser bars don't push the UI off screen */
+    container: app / size;
+}
+
+button,
+input,
+select {
+    font: inherit;
+    color: inherit;
+}
+
+/* ── layout: phone portrait (default) ───────────────────────────── */
+
+.app {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr var(--sheet-h, 42dvh);
+    grid-template-areas:
+        'toolbar'
+        'viewport'
+        'sheet';
+    padding: 0 var(--safe-r) 0 var(--safe-l);
+}
+
+.app[data-sheet='peek'] { --sheet-h: calc(56px + var(--safe-b)); }
+.app[data-sheet='half'] { --sheet-h: 42dvh; }
+.app[data-sheet='full'] { --sheet-h: 82dvh; }
+
+.toolbar { grid-area: toolbar; }
+.viewport { grid-area: viewport; }
+.sheet { grid-area: sheet; }
+
+.viewport {
+    position: relative;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    background: #0d0e10;
+    touch-action: none;
+}
+
+.sheet {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+    padding-bottom: var(--safe-b);
+    transition: none;
+}
+
+.sheet-handle {
+    flex: 0 0 auto;
+    height: 22px;
+    border: 0;
+    background: none;
+    display: grid;
+    place-items: center;
+    cursor: ns-resize;
+    touch-action: none;
+}
+
+.sheet-handle span {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+}
+
+.sheet-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 4px;
+    padding: 0 8px 6px;
+}
+
+.tab {
+    flex: 1;
+    min-height: 34px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.tab.active {
+    background: var(--panel-2);
+    color: var(--fg);
+}
+
+/* Only the active tab's panel shows inside the sheet. */
+.sheet > .panel { display: none; }
+.app[data-tab='scene'] .panel-scene,
+.app[data-tab='inspector'] .panel-inspector,
+.app[data-tab='console'] .panel-console {
+    display: flex;
+}
+.app[data-sheet='peek'] .sheet > .panel { display: none; }
+.sheet .panel-header { display: none; } /* the tab names it */
+
+/* ── layout: phone landscape — the sheet docks to the side ──────── */
+
+@container app (orientation: landscape) and (max-height: 560px) {
+    .app {
+        grid-template-columns: 1fr min(42vw, 360px);
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+            'toolbar toolbar'
+            'viewport sheet';
+    }
+
+    .sheet {
+        border-top: 0;
+        border-left: 1px solid var(--line);
+        border-radius: 0;
+    }
+
+    .sheet-handle { display: none; }
+    .app[data-sheet='peek'] .sheet > .panel { display: flex; } /* no peek when docked */
+}
+
+/* ── layout: desktop / tablet — panels dock around the viewport ──── */
+
+@container app (min-width: 900px) and (min-height: 561px) {
+    .app {
+        grid-template-columns: 250px 1fr 340px;
+        grid-template-rows: auto 1fr 190px;
+        grid-template-areas:
+            'toolbar toolbar toolbar'
+            'scene viewport inspector'
+            'scene console inspector';
+    }
+
+    /* The sheet dissolves; its panels become grid items. */
+    .sheet { display: contents; }
+    .sheet-handle,
+    .sheet-tabs { display: none; }
+    .app .sheet > .panel { display: flex; }
+    .sheet .panel-header { display: flex; }
+
+    .panel-scene { grid-area: scene; border-right: 1px solid var(--line); }
+    .panel-inspector { grid-area: inspector; border-left: 1px solid var(--line); }
+    .panel-console { grid-area: console; border-top: 1px solid var(--line); }
+}
+
+/* ── full screen ────────────────────────────────────────────────── */
+
+.app.ui-hidden {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: 'viewport';
+    padding: 0;
+}
+
+.app.ui-hidden .toolbar,
+.app.ui-hidden .sheet {
+    display: none;
+}
+
+.fab {
+    position: fixed;
+    right: calc(16px + var(--safe-r));
+    bottom: calc(16px + var(--safe-b));
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: rgba(29, 31, 35, 0.85);
+    backdrop-filter: blur(6px);
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* ── toolbar ────────────────────────────────────────────────────── */
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: calc(6px + var(--safe-t)) 8px 6px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    min-width: 0;
+}
+
+.brand {
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    padding: 0 4px;
+}
+
+.spacer { flex: 1; }
+
+.btn {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--panel-2);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn.small { min-height: 26px; padding: 0 8px; font-size: 12px; }
+.btn.icon { width: 40px; padding: 0; font-size: 18px; }
+.btn.danger { color: var(--danger); }
+
+.btn.play {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+}
+
+.btn.play.stop {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.segmented {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.seg {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.seg.active { background: var(--panel-2); color: var(--fg); }
+.seg-icon { display: none; font-size: 17px; }
+
+/* Narrow toolbars: icon-only gizmo buttons, no wordmark. */
+@container app (max-width: 520px) {
+    .brand { display: none; }
+    .seg-label { display: none; }
+    .seg-icon { display: inline; }
+    .seg { min-width: var(--tap); padding: 0 6px; }
+}
+.seg:disabled { opacity: 0.45; }
+
+@media (pointer: coarse) {
+    .btn, .seg, .tab { min-height: var(--tap); }
+    .btn.icon { width: var(--tap); }
+}
+
+.is-playing .viewport { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ── panels ─────────────────────────────────────────────────────── */
+
+.panel {
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    background: var(--panel);
+    overflow: hidden;
+}
+
+.panel-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+}
+
+.empty { color: var(--muted); padding: 16px; margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+/* scene tree */
+
+.tree {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.tree-row {
+    width: 100%;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: none;
+    text-align: left;
+    padding-right: 12px;
+    cursor: pointer;
+}
+
+@media (pointer: coarse) { .tree-row { min-height: var(--tap); } }
+
+.tree-row:hover { background: var(--panel-2); }
+.tree-row.selected { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.tree-icon { width: 16px; text-align: center; color: var(--muted); }
+.tree-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.tree-badge {
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 1px 6px;
+}
+
+/* inspector */
+
+.inspector-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+}
+
+.row-label {
+    flex: 0 0 86px;
+    color: var(--muted);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.row-buttons { display: flex; gap: 8px; }
+
+.card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--panel-2);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    padding-bottom: 2px;
+}
+
+.pill {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 1px 7px;
+}
+
+.name-row .name { flex: 1; font-weight: 600; }
+
+.text,
+.num,
+.select {
+    min-width: 0;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+}
+
+.text, .select { flex: 1; }
+.num { width: 100%; padding: 0 6px; font-family: var(--mono); font-size: 12px; }
+
+.vec3 .row-label { flex-basis: 60px; }
+
+/* Spinner arrows steal width from small numeric fields; drag sliders and the keyboard still work. */
+.num { -moz-appearance: textfield; appearance: textfield; }
+.num::-webkit-inner-spin-button,
+.num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.vec3 .axis {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vec3 .axis > span {
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 10px;
+}
+
+.axis-x > span { color: var(--x); }
+.axis-y > span { color: var(--y); }
+.axis-z > span { color: var(--z); }
+
+.field-number {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.field-number input[type='range'] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.field-number .num { flex: 0 0 76px; }
+
+.check { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.color {
+    width: 44px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: none;
+}
+
+.value { font-family: var(--mono); font-size: 12px; }
+
+@media (pointer: coarse) {
+    .text, .num, .select, .color { height: 38px; }
+    .check { width: 24px; height: 24px; }
+}
+
+/* console */
+
+.console {
+    list-style: none;
+    margin: 0;
+    padding: 6px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font: 12px/1.5 var(--mono);
+}
+
+.log time { color: var(--muted); margin-right: 6px; }
+.log-warn { color: var(--warn); }
+.log-error { color: var(--danger); }
